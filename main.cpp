@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string>
 
 
 class Map {
@@ -107,13 +108,16 @@ int Map::getNeighbors(int x, int y){
 }
 
 void Map::updateScreen(){
-	clear();
+	std::string s;
 
 	for (int i=0; i<rows; i++){
 		for (int j=0; j<cols; j++){
-			addch(one[i][j]);
+			s += one[i][j];
 		}
 	}
+
+	const char * n = s.c_str();
+	mvaddstr(0, 0, n);
 }
 
 void Map::loop(){
@@ -161,9 +165,16 @@ void init() {
 	initscr();
 	raw();
 	noecho();
+	start_color();
 	keypad(stdscr, true);
 	nodelay(stdscr, true);
 	curs_set(0);
+
+	use_default_colors();
+
+	init_pair(1, COLOR_GREEN, -1);
+
+	attron(COLOR_PAIR(1));
 }
 
 int main(){
