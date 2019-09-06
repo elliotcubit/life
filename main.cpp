@@ -22,6 +22,8 @@ public:
 	void loop();
 	void quit();
 	void clear();
+	void stepwise();
+	void insertmode();
 	void initialValues();
 	int getNeighbors(int, int);
 };
@@ -109,8 +111,6 @@ void Map::nextGeneration(){
 			}
 		}
 	}
-
-
 
 	// afterwards, the "current" state will be in two,
 	// and the old will be in one.
@@ -200,35 +200,61 @@ void Map::loop(){
 			clear();
 		}
 
-		// evaluate stepwise
-		// TODO merge into main loop here, there's no need for this
+		// pause
 		if (ch == 's'){
-			nodelay(stdscr, false);
-
-			for ( ;; ){
-				char c = getch();
-				if (c == 's'){
-					break;
-				}
-				if (c == 'q'){
-					quit();
-					exit(0);
-				}
-				if (c == 'n'){
-					nextGeneration();
-					updateScreen();
-				}
-				if (c == 'r'){
-					initialValues();
-					updateScreen();
-				}
-			}
-
-			nodelay(stdscr, true);
+			stepwise();
 		}
 
 		napms(delay);
 	}		
+}
+
+void Map::stepwise(){
+	nodelay(stdscr, false);
+
+	for ( ;; ){
+		char c = getch();
+		// exit stepwise
+		if (c == 's'){
+			break;
+		}
+		// exit program
+		if (c == 'q'){
+			quit();
+			exit(0);
+		}
+		// next iteration
+		if (c == 'n'){
+			nextGeneration();
+			updateScreen();
+		}
+		// reset
+		if (c == 'r'){
+			initialValues();
+			updateScreen();
+		}
+
+		// insert mode
+		if (c == 'i'){
+			insertmode();
+		}
+	}
+
+	nodelay(stdscr, true);
+}
+
+// allow writing onto the mf screen yo
+void Map::insertmode(){
+
+
+	for (;;){
+		char c = getch();
+
+		if (c == 'q'){
+			quit();
+			exit(0);
+		}
+	}
 
 }
 
