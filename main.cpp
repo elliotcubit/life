@@ -20,6 +20,9 @@ public:
 	void updateScreen();
 	void nextGeneration();
 	void loop();
+	void quit();
+	void clear();
+	void initialValues();
 	int getNeighbors(int, int);
 };
 
@@ -28,7 +31,9 @@ Map::Map(){
 	getmaxyx(stdscr, rows, cols);
 
 	stop = false;
-	delay = 250;
+	delay = 120;
+
+	/*
 	one = new char*[rows];
 	two = new char*[rows];
 	for (int i=0; i<rows; i++){
@@ -40,6 +45,42 @@ Map::Map(){
 	for (int i=0; i<rows; i++){
 		for (int j=0; j<cols; j++){
 			one[i][j] = rand() % 2 ? ' ' : 'o';
+		}
+	}
+	*/
+
+	initialValues();
+}
+
+void Map::initialValues(){
+	if (one != nullptr){
+		for (int i=0; i<rows; i++){
+			delete[] one[i];
+			delete[] two[i];
+		}
+		delete[] one;
+		delete[] two;
+	}
+
+	one = new char*[rows];
+	two = new char*[rows];
+	for (int i=0; i<rows; i++){
+		one[i] = new char[cols];
+		two[i] = new char[cols];
+	}
+
+	// 1/2 change to be alive
+	for (int i=0; i<rows; i++){
+		for (int j=0; j<cols; j++){
+			one[i][j] = rand() % 2 ? ' ' : 'o';
+		}
+	}
+}
+
+void Map::clear(){
+	for (int i=0; i<rows; i++){
+		for (int j=0; j<cols; j++){
+			one[i][j] = ' ';
 		}
 	}
 }
@@ -110,14 +151,20 @@ int Map::getNeighbors(int x, int y){
 void Map::updateScreen(){
 	std::string s;
 
+	move(0,0);
 	for (int i=0; i<rows; i++){
 		for (int j=0; j<cols; j++){
-			s += one[i][j];
+			//s += one[i][j];
+
+			if (one[i][j] == two[i][j]) attron(COLOR_PAIR(1));
+			else attron(COLOR_PAIR(2));
+
+			addch(one[i][j]);
 		}
 	}
 
 	const char * n = s.c_str();
-	mvaddstr(0, 0, n);
+	//mvaddstr(0, 0, n);
 }
 
 void Map::loop(){
@@ -127,28 +174,52 @@ void Map::loop(){
 
 		char ch = getch();
 
+		// quit
 		if (ch == 'q'){
-			break;
+			quit();
+			exit(0);
 		}
 
+		// speed up
 		if (ch == '='){
 			if (delay > 0) delay -= 50;
 		}
 	
+		// slow down
 		if (ch == '-'){
 			if (delay < 2000) delay += 50;
 		}
 
+		// restart
+		if (ch == 'r'){
+			initialValues();
+		}
+
+		// clear
+		if (ch == 'c'){
+			clear();
+		}
+
+		// evaluate stepwise
+		// TODO merge into main loop here, there's no need for this
 		if (ch == 's'){
 			nodelay(stdscr, false);
 
 			for ( ;; ){
 				char c = getch();
-				if (c == 's' || c == 'r'){
+				if (c == 's'){
 					break;
+				}
+				if (c == 'q'){
+					quit();
+					exit(0);
 				}
 				if (c == 'n'){
 					nextGeneration();
+					updateScreen();
+				}
+				if (c == 'r'){
+					initialValues();
 					updateScreen();
 				}
 			}
@@ -158,6 +229,11 @@ void Map::loop(){
 
 		napms(delay);
 	}		
+
+}
+
+void Map::quit(){
+	endwin();
 }
 
 void init() {
@@ -172,18 +248,18 @@ void init() {
 
 	use_default_colors();
 
-	init_pair(1, COLOR_GREEN, -1);
+	init_pair(1, COLOR_WHITE, -1);
+	init_pair(2, COLOR_GREEN, -1);
 
 	attron(COLOR_PAIR(1));
 }
 
-int main(){
+int main(int argc, char ** args){
 	init();
 
 	Map * m;
 
 	m = new Map();
-
 
 	m->loop();
 
