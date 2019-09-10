@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <time.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string>
 
 
@@ -11,6 +12,9 @@ private:
 	int rows;
 	int cols;
 	int delay;
+
+	int curCol;
+	int curRow;
 
 public:
 	Map();
@@ -24,12 +28,16 @@ public:
 	void clear();
 	void stepwise();
 	void insertmode();
+	void changePosition(int, int);
 	void initialValues();
 	int getNeighbors(int, int);
 };
 
 
 Map::Map(){
+	curCol = 0;
+	curRow = 0;
+
 	getmaxyx(stdscr, rows, cols);
 
 	stop = false;
@@ -238,6 +246,11 @@ void Map::stepwise(){
 		if (c == 'i'){
 			insertmode();
 		}
+
+		if (c == 'c'){
+			clear();
+			updateScreen();
+		}
 	}
 
 	nodelay(stdscr, true);
@@ -246,16 +259,89 @@ void Map::stepwise(){
 // allow writing onto the mf screen yo
 void Map::insertmode(){
 
+	curCol = cols-1;
+	curRow = rows-1;
+
+	// display cursor while doing this
+	curs_set(1);
 
 	for (;;){
 		char c = getch();
 
+		// quit
 		if (c == 'q'){
-			quit();
-			exit(0);
+			break;
+		}
+
+		// L
+		else if (c == 'h'){
+			changePosition(0, -1);
+		}
+		// D
+		else if (c == 'j'){
+			changePosition(1, 0);
+		}
+		// U
+		else if (c == 'k'){
+			changePosition(-1, 0);
+		}
+		// R
+		else if (c == 'l'){
+			changePosition(0, 1);
+		}
+
+		else if (c == 'x'){
+			one[curRow][curCol] = ' ';
+			updateScreen();
+		}
+
+		else {
+			one[curRow][curCol] = 'o';
+			changePosition(0, 1);
+			updateScreen();
+		}
+
+		move(curRow, curCol);
+	}
+
+	curs_set(0);
+}
+
+void Map::changePosition(int row, int col){
+	curRow += row;
+	curCol += col;
+
+	// if extend past row
+	// and we aren't at the very bottom
+	if (curCol >= cols && curRow < rows-1){
+		if (curRow < rows-1){
+			// set col to zero and increment row
+			curRow += 1;
+			curCol = 0;
+		}
+		else{
+			curCol -= col; // undo invalid move
 		}
 	}
 
+	// if we got before row
+	if (curCol < 0){
+		if (curRow != 0){
+			curRow -= 1;
+			curCol = cols-1;
+		}
+		else{
+			curCol -= col;
+		}
+	}
+
+	if (curRow > rows-1){
+		curRow -= row;
+	}
+
+	if (curRow < 0){
+		curRow = 0;
+	}
 }
 
 void Map::quit(){
